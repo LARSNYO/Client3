@@ -139,13 +139,13 @@ class UdpClientOrThing
                 {
                     UdpReceiveResult result = await udpClient.ReceiveAsync();
                     string message = Encoding.UTF8.GetString(result.Buffer);
-                    Print($"Получено: {message}");
+                    Console.WriteLine($"Получено: {message}");
                     if (message.Equals("GET TEMP", StringComparison.OrdinalIgnoreCase))
                     {
                         string response = $"TEMP:{rnd.Next(20, 30)}C";
                         byte[] responseBytes = Encoding.UTF8.GetBytes(response);
                         await udpClient.SendAsync(responseBytes, responseBytes.Length, serverEndpoint);
-                        Print($"Отправлено: {response}");
+                        Console.WriteLine($"Отправлено: {response}");
                     }
                     else if (message.Equals("START STREAM", StringComparison.OrdinalIgnoreCase))
                     {
@@ -153,7 +153,7 @@ class UdpClientOrThing
                         string ack = "STREAMING ENABLED";
                         byte[] ackBytes = Encoding.UTF8.GetBytes(ack);
                         await udpClient.SendAsync(ackBytes, ackBytes.Length, serverEndpoint);
-                        Print("Режим потоковой передачи включен.");
+                        Console.WriteLine("Режим потоковой передачи включен.");
                     }
                     else if (message.Equals("STOP STREAM", StringComparison.OrdinalIgnoreCase))
                     {
@@ -161,13 +161,13 @@ class UdpClientOrThing
                         string ack = "STREAMING DISABLED";
                         byte[] ackBytes = Encoding.UTF8.GetBytes(ack);
                         await udpClient.SendAsync(ackBytes, ackBytes.Length, serverEndpoint);
-                        Print("Режим потоковой передачи отключен.");
+                        Console.WriteLine("Режим потоковой передачи отключен.");
                     }
                 }
                 catch (Exception ex)
                 {
                     if (!cts.Token.IsCancellationRequested)
-                        Print("Ошибка получения: " + ex.Message);
+                        Console.WriteLine("Ошибка получения: " + ex.Message);
                 }
             }
         });
@@ -186,19 +186,23 @@ class UdpClientOrThing
             await Task.Delay(100);
         }
     }
-
-    // Метод Print – выводит сообщение, не нарушая ввод пользователя (работает на Windows)
-    static void Print(string message)
+    static void Print(string message) //очень важная штука, без нее ничего не работает
     {
-        if (OperatingSystem.IsWindows())
+        if (OperatingSystem.IsWindows())    // если ОС Windows
         {
-            var position = Console.GetCursorPosition();
-            int left = position.Left;
-            int top = position.Top;
+            var position = Console.GetCursorPosition(); // получаем текущую позицию курсора
+            int left = position.Left;   // смещение в символах относительно левого края
+            int top = position.Top;     // смещение в строках относительно верха
+                                        // копируем ранее введенные символы в строке на следующую строку
             Console.MoveBufferArea(0, top, left, 1, 0, top + 1);
+            // устанавливаем курсор в начало текущей строки
             Console.SetCursorPosition(0, top);
+            // в текущей строке выводит полученное сообщение
             Console.WriteLine(message);
+            // переносим курсор на следующую строку
+            // и пользователь продолжает ввод уже на следующей строке
             Console.SetCursorPosition(left, top + 1);
         }
+        else Console.WriteLine(message);
     }
 }
